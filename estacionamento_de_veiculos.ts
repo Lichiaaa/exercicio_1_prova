@@ -1,3 +1,5 @@
+
+
 enum TipoVeiculo {
     Car = 'Carro',
     Motorcycle = 'Moto',
@@ -6,6 +8,54 @@ enum TipoVeiculo {
 
 interface Estrategia_Preco {
     calcule(veiculo: Veiculo, horas: number): number;
+}
+
+class FlatRatePricing implements Estrategia_Preco{
+    //cobra horas arredondadas × preço base
+    constructor(
+        private basePricePerHour: number
+    ) {}
+
+    calcule(v: Veiculo, h: number): number {
+        const horasArredondadas = Math.ceil(h);
+        return horasArredondadas * v.getBasePricePerHour();
+    }
+}
+
+class ProgressivePricing implements Estrategia_Preco{
+    //primeiras N horas preço normal, depois fator maior
+    constructor(
+        private tempo_base: number,
+        private multiplicador: number
+    ){}
+
+    calcule(v: Veiculo, h: number): number {
+        const horasT = Math.ceil(h);
+        const base = v.getBasePricePerHour();
+
+        const normal = Math.min(horasT, this.tempo_base);
+        const extra = Math.max(0, (horasT - this.tempo_base));
+
+        return ((normal*base) + (extra*base*this.multiplicador));
+    }
+}
+
+class OvernightPricing implements Estrategia_Preco{
+    //acima de certo número de horas, aplica tarifa noturna especial
+    constructor(
+        private limiteHoras: number,      // a partir de quantas horas vira “noturno”
+        private multiplicadorNoturno: number // ex: 1.8, 2.0
+    ) {}
+
+    calcule(v: Veiculo, h: number): number {
+        const horasT = Math.ceil(h);
+        const base = v.getBasePricePerHour();
+
+        const normal = Math.min(horasT, this.limiteHoras);
+        const noturno = Math.max(0, horasT - this.limiteHoras);
+
+        return (normal * base) + (noturno * base * this.multiplicadorNoturno);
+    }
 }
 
 abstract class Veiculo{
@@ -33,24 +83,24 @@ abstract class Veiculo{
         this.tipo = t;
     }
 
-    getBasePricePerHour(hora_inicio: number, hora_final: number): number {
-        let horasTotais: number;
-        horasTotais = hora_inicio - hora_final;
+    abstract getBasePricePerHour(): number;
+}
 
-        let preco: number;
-        preco = 0;
+class Carro extends Veiculo {
+    getBasePricePerHour(): number {
+        return 6;
+    }
+}
 
-        if (this.getTipo() === 'Carro'){
-            preco = 10 * horasTotais;
-        }
-        else if (this.getTipo() === 'Moto'){
-            preco = 20 * horasTotais;
-        }
-        else {
-            preco = 30 * horasTotais;
-        }
+class Moto extends Veiculo {
+    getBasePricePerHour(): number {
+        return 3;
+    }
+}
 
-        return preco;
+class Caminhao extends Veiculo {
+    getBasePricePerHour(): number {
+        return 15;
     }
 }
 
@@ -59,7 +109,7 @@ class Local_Vaga{
     private tipoPermitido: TipoVeiculo;
     private veiculo?: Veiculo | null;
 
-    constructor(id: string, tipoPermitido: TipoVeiculo, veiculo: Veiculo){
+    constructor(id: string, tipoPermitido: TipoVeiculo, veiculo: Veiculo | null = null){
         this.id = id;
         this.tipoPermitido = tipoPermitido;
         this.veiculo = veiculo;
@@ -152,23 +202,14 @@ class Lista_Vagas{
     leaveFromSpot(id: string): Veiculo | null {
         for(const vaga of this.l_vagas){
             if (vaga.getId() === id){
-                vaga.leave();
+                return vaga.leave();
             }
         }
         return null;
     }
 
     calculateFee(v: Veiculo, h: number, e: Estrategia_Preco): number {
-
+        return e.calcule(v,h);
     }
 }
 
-function FlatRatePricing(): {
-    //cobra horas arredondadas × preço base
-}
-function ProgressivePricing(): {
-    //primeiras N horas preço normal, depois fator maior
-}
-function OvernightPricing(): {
-    //acima de certo número de horas, aplica tarifa noturna especial
-}
