@@ -12,10 +12,6 @@ interface Estrategia_Preco {
 
 class FlatRatePricing implements Estrategia_Preco{
     //cobra horas arredondadas × preço base
-    constructor(
-        private basePricePerHour: number
-    ) {}
-
     calcule(v: Veiculo, h: number): number {
         const horasArredondadas = Math.ceil(h);
         return horasArredondadas * v.getBasePricePerHour();
@@ -213,3 +209,84 @@ class Lista_Vagas{
     }
 }
 
+//    Instanciando as classes 
+
+//Carros
+let v1: Veiculo = new Carro('ABC-1234', TipoVeiculo.Car);
+let v2: Veiculo = new Carro('QWE-9J87', TipoVeiculo.Car);
+let v3: Veiculo = new Carro('MNO-4567', TipoVeiculo.Car);
+//Motos
+let v4: Veiculo = new Moto('XYZ-9988', TipoVeiculo.Motorcycle);
+let v5: Veiculo = new Moto('KLM-7A21', TipoVeiculo.Motorcycle);
+let v6: Veiculo = new Moto('RTY-3344', TipoVeiculo.Motorcycle);
+//Caminhoes
+let v7: Veiculo = new Caminhao('TRK-1020', TipoVeiculo.Truck);
+let v8: Veiculo = new Caminhao('CMT-8899', TipoVeiculo.Truck);
+let v9: Veiculo = new Caminhao('LNG-5566', TipoVeiculo.Truck);
+
+//Estrategias de preco
+let estrategia1 = new FlatRatePricing();
+let estrategia2 = new ProgressivePricing(2, 1.5);
+let estrategia3 = new OvernightPricing(6, 2);
+
+//Criando array de vagas (vazias)
+let vaga1 = new Local_Vaga('A1', TipoVeiculo.Car);
+let vaga2 = new Local_Vaga('A2', TipoVeiculo.Car);
+let vaga3 = new Local_Vaga('A3', TipoVeiculo.Car);
+let vaga4 = new Local_Vaga('M1', TipoVeiculo.Motorcycle);
+let vaga5 = new Local_Vaga('M2', TipoVeiculo.Motorcycle);
+let vaga6 = new Local_Vaga('M3', TipoVeiculo.Motorcycle);
+let vaga7 = new Local_Vaga('Z1', TipoVeiculo.Truck);
+let vaga8 = new Local_Vaga('Z2', TipoVeiculo.Truck);
+let vaga9 = new Local_Vaga('Z3', TipoVeiculo.Truck);
+let vaga10 = new Local_Vaga('A4', TipoVeiculo.Car);
+
+let l = new Lista_Vagas;
+l.addSpot(vaga1);
+l.addSpot(vaga2);
+l.addSpot(vaga3);
+l.addSpot(vaga4);
+l.addSpot(vaga5);
+l.addSpot(vaga6);
+l.addSpot(vaga7);
+l.addSpot(vaga8);
+l.addSpot(vaga9);
+l.addSpot(vaga10);
+
+// Resposta vai ser true (verdadeira) pq todas as vagas começam vazias
+console.log("A1 livre?", vaga1.isFree());
+console.log("M1 livre?", vaga4.isFree());
+console.log("Z3 livre?", vaga9.isFree());
+
+//Estacionando alguns veiculos
+console.log("(v1) Estaciona em uma vaga");
+let vagaOcupada1 = l.park(v1);
+console.log("Estacionou em:", vagaOcupada1?.getId());
+console.log("A1 livre?", vaga1.isFree());
+console.log("Veículo em A1:", vaga1.getVeiculo()?.getPlaca());
+
+console.log("(v5) Estaciona em uma vaga");
+let vagaOcupada2 = l.park(v5);
+console.log("Estacionou em:", vagaOcupada2?.getId());
+console.log("M1 livre?", vaga4.isFree());
+console.log("Veículo em M1:", vaga4.getVeiculo()?.getPlaca());
+
+console.log("(v8) Estaciona em uma vaga");
+let vagaOcupada3 = l.park(v8);
+console.log("Estacionou em:", vagaOcupada3?.getId());
+console.log("Z1 livre?", vaga7.isFree());
+console.log("Veículo em Z1:", vaga7.getVeiculo()?.getPlaca());
+
+//Teste para veiculos incompativel com a vaga
+let teste = vaga2.park(v4);
+console.log("Moto conseguiu estacionar na vaga de carro? ", teste);
+
+//Cobranças
+console.log("[v5 | Moto] Cobrança para Flat Rating Price: ", l.calculateFee(v4, 3, estrategia1));
+console.log("[v8 | Caminhao] Cobrança para Progressive Pricing", l.calculateFee(v8, 10, estrategia2));
+console.log("[v1 | Carro] Cobrança para Overnight Pricing", l.calculateFee(v1, 21, estrategia3));
+
+//Saida de um Carro
+let vagaDesocupada = l.leaveFromSpot('A1');
+console.log("Placa do Carro:", vagaDesocupada?.getPlaca());
+console.log("A1 livre depois?", vaga1.isFree());
